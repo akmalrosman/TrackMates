@@ -70,7 +70,7 @@
 
     @* Dynamic Grid: Tracklist & Pop-up Player *@
     <div class="row g-4">
-        @* The Tracklist - REMOVED transition-all here to prevent flex-wrapping glitch! *@
+        @* The Tracklist *@
         <div class="@(isPlaying ? "col-12 col-lg-7" : "col-12")">
             <div class="glass-panel p-3 shadow-lg d-flex flex-column h-100">
                 <div class="d-flex justify-content-between align-items-center mb-3 px-2 border-bottom border-secondary border-opacity-25 pb-3">
@@ -141,7 +141,7 @@
             </div>
         </div>
 
-        @* The Pop-up Player (Appears seamlessly on the right side) *@
+        @* The Pop-up Player *@
         @if (isPlaying)
         {
             <div class="col-12 col-lg-5 fade-in">
@@ -158,10 +158,12 @@
 
                     <div class="bg-black text-center">
                         <div class="ratio ratio-16x9">
-                            <iframe src="https://www.youtube.com/embed/@activeEmbedId?autoplay=1"
+                            @* Added @key directive and parameters to force full element re-creation and autoplay confirmation *@
+                            <iframe @key="activeEmbedId"
+                                    src="https://www.youtube.com/embed/@activeEmbedId?autoplay=1&mute=0&modestbranding=1&rel=0"
                                     title="YouTube video player"
                                     frameborder="0"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                     allowfullscreen>
                             </iframe>
                         </div>
@@ -350,7 +352,6 @@
     private string? errorMessage;
     private bool isPlaying => !string.IsNullOrEmpty(activeEmbedId);
 
-    // Using relative URL for the API
     private readonly string ApiUrl = "api/songs";
 
     protected override async Task OnInitializedAsync()
