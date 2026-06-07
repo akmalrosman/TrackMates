@@ -31,7 +31,7 @@ namespace FriendsMusicTracker.Mobile
             // (Mac: Open Terminal -> type 'ifconfig' -> look for inet under en0)
             // =====================================================================
 
-            string myIpAddress = "192.168.1.40";
+            string myIpAddress = "YOUR_IPV4_ADDRESS_HERE";
 
             string apiUrl = OperatingSystem.IsAndroid()
                 ? $"http://{myIpAddress}:5255/"
