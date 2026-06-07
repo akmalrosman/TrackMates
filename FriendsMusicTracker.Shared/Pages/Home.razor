@@ -1,0 +1,340 @@
+﻿@page "/"
+@using FriendsMusicTracker.Data
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject UserState UserState
+@inject NavigationManager NavManager
+
+<div class="music-dashboard pb-2">
+
+    @* Dashboard Sync Error Alert *@
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mb-4 d-flex align-items-center glass-panel border-danger" role="alert">
+            <span class="fs-4 me-3">⚠️</span>
+            <div>
+                <h6 class="alert-heading mb-1 fw-bold">Sync Interrupted</h6>
+                <p class="mb-0 small">@errorMessage</p>
+            </div>
+        </div>
+    }
+
+    @* Hero "Featured" Banner *@
+    <div class="hero-section mb-5 position-relative overflow-hidden shadow-lg glass-panel border-0">
+        <div class="hero-bg position-absolute w-100 h-100"></div>
+        <div class="hero-content p-4 p-md-5 position-relative d-flex flex-column justify-content-end h-100">
+            <div class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold mb-3 w-auto align-self-start shadow">
+                VERIFIED CREW
+            </div>
+            <h1 class="display-3 fw-bold text-white mb-1" style="letter-spacing: -1px;">
+                @UserState.MemberName
+            </h1>
+            <p class="text-white-50 fs-5 mb-4">Your personal studio dashboard is ready.</p>
+
+            <div class="d-flex align-items-center gap-3 mt-2">
+                <button class="btn btn-warning rounded-circle shadow-lg play-main-btn d-flex align-items-center justify-content-center" @onclick="GoToLounge">
+                    <span class="fs-4 ms-1 text-dark">▶</span>
+                </button>
+                <button class="btn btn-outline-light rounded-pill px-4 py-2 fw-bold text-uppercase glass-btn" style="letter-spacing: 1px;" @onclick="GoToLounge">
+                    Resume Mix
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @* Library Stats Section *@
+    <div>
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <h4 class="text-white fw-bold mb-0">Your Library Stats</h4>
+            <span class="text-warning small text-uppercase fw-bold d-flex align-items-center gap-2" style="letter-spacing: 1px;">
+                <span class="pulse-dot bg-warning rounded-circle" style="width: 8px; height: 8px;"></span>
+                Live Sync
+            </span>
+        </div>
+
+        <div class="row g-4">
+            @* Stat Card 1: Your Songs *@
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="music-card group shadow-lg glass-panel">
+                    <div class="card-art song-art d-flex align-items-center justify-content-center flex-column">
+                        <span class="display-4 mb-2">🎵</span>
+                        <div class="equalizer-animation">
+                            <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                        </div>
+                    </div>
+                    <div class="card-info mt-3">
+                        <h5 class="text-white fw-bold mb-1">Your Tracks</h5>
+                        <p class="text-white-50 small mb-0">@myTotalSongs Recorded</p>
+                    </div>
+                </div>
+            </div>
+
+            @* Stat Card 2: Your Playlists *@
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="music-card group shadow-lg glass-panel">
+                    <div class="card-art playlist-art d-flex align-items-center justify-content-center">
+                        <span class="display-4">💽</span>
+                    </div>
+                    <div class="card-info mt-3">
+                        <h5 class="text-white fw-bold mb-1">Playlists</h5>
+                        <p class="text-white-50 small mb-0">@myTotalPlaylists Created</p>
+                    </div>
+                </div>
+            </div>
+
+            @* Stat Card 3: Your Reviews *@
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="music-card group shadow-lg glass-panel">
+                    <div class="card-art review-art d-flex align-items-center justify-content-center">
+                        <span class="display-4">🎤</span>
+                    </div>
+                    <div class="card-info mt-3">
+                        <h5 class="text-white fw-bold mb-1">Reviews</h5>
+                        <p class="text-white-50 small mb-0">@myTotalReviews Given</p>
+                    </div>
+                </div>
+            </div>
+
+            @* Stat Card 4: Global Crew *@
+            <div class="col-12 col-sm-6 col-lg-3">
+                <div class="music-card group shadow-lg glass-panel">
+                    <div class="card-art crew-art d-flex align-items-center justify-content-center">
+                        <span class="display-4">🌍</span>
+                    </div>
+                    <div class="card-info mt-3">
+                        <h5 class="text-white fw-bold mb-1">Global Crew</h5>
+                        <p class="text-white-50 small mb-0">@totalMembers Members</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Interactive Bottom Banner *@
+    <div class="mt-5">
+        <div class="glass-panel p-3 p-md-4 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-black bg-opacity-50 rounded p-2 shadow-sm border border-secondary border-opacity-25" style="width: 45px; height: 45px; display: grid; place-items: center;">
+                    <span class="text-warning">🎚️</span>
+                </div>
+                <div>
+                    <h6 class="text-white fw-bold mb-0">Studio Connected</h6>
+                    <span class="text-white-50 small">Adding tracks or playlists will instantly update your dashboard.</span>
+                </div>
+            </div>
+            <div class="pulse-dot bg-success rounded-circle" style="width: 12px; height: 12px;"></div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .music-dashboard {
+        color: #fff;
+    }
+
+    /* Shared Glassmorphism Utilities */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+    }
+
+    .glass-btn {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(5px);
+    }
+
+        .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+    /* Hero Section Styles */
+    .hero-section {
+        height: 340px;
+    }
+
+    .hero-bg {
+        background: linear-gradient(0deg, rgba(10,10,10,1) 0%, rgba(10,10,10,0.2) 100%), url('https://images.unsplash.com/photo-1598387181032-a3103a2db5b3?q=80&w=1000&auto=format&fit=crop') center/cover;
+        opacity: 0.7;
+        transition: transform 10s ease;
+    }
+
+    .hero-section:hover .hero-bg {
+        transform: scale(1.05);
+    }
+
+    .play-main-btn {
+        width: 60px;
+        height: 60px;
+        transition: transform 0.2s, background-color 0.2s;
+    }
+
+        .play-main-btn:hover {
+            transform: scale(1.05);
+            background-color: #ffca2c;
+        }
+
+    /* Music Platform Cards */
+    .music-card {
+        padding: 16px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+        .music-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 193, 7, 0.2);
+            transform: translateY(-5px);
+        }
+
+    .card-art {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 12px;
+        position: relative;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        overflow: hidden;
+    }
+
+    /* Unique Gradient Backgrounds for Cards */
+    .song-art {
+        background: linear-gradient(135deg, #4b1b4b 0%, #1e1b4b 100%);
+    }
+
+    .playlist-art {
+        background: linear-gradient(135deg, #4b361b 0%, #4b1b1b 100%);
+    }
+
+    .review-art {
+        background: linear-gradient(135deg, #1b4b36 0%, #1b364b 100%);
+    }
+
+    .crew-art {
+        background: linear-gradient(135deg, #4b4b1b 0%, #361b4b 100%);
+    }
+
+    /* Animated Equalizer */
+    .equalizer-animation {
+        display: flex;
+        gap: 3px;
+        height: 15px;
+        align-items: flex-end;
+    }
+
+    .bar {
+        width: 4px;
+        background-color: #ffc107;
+        animation: equalize 1s infinite alternate;
+        border-radius: 2px;
+    }
+
+        .bar:nth-child(1) {
+            height: 60%;
+            animation-delay: -0.4s;
+        }
+
+        .bar:nth-child(2) {
+            height: 100%;
+            animation-delay: -0.2s;
+        }
+
+        .bar:nth-child(3) {
+            height: 40%;
+            animation-delay: -0.6s;
+        }
+
+        .bar:nth-child(4) {
+            height: 80%;
+            animation-delay: -0.1s;
+        }
+
+    @@keyframes equalize {
+        0% {
+            height: 20%;
+        }
+
+        100% {
+            height: 100%;
+        }
+    }
+
+    /* Pulsing Connection Dot */
+    .pulse-dot {
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7);
+        }
+
+        70% {
+            box-shadow: 0 0 0 8px rgba(25, 135, 84, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(25, 135, 84, 0);
+        }
+    }
+
+    /* Responsive Grid Adjustments */
+    @@media (max-width: 575.98px) {
+        .card-art {
+            aspect-ratio: 16/9;
+        }
+    }
+</style>
+
+@code {
+    private int totalMembers = 0;
+    private int myTotalSongs = 0;
+    private int myTotalPlaylists = 0;
+    private int myTotalReviews = 0;
+    private string? errorMessage;
+
+    public class DashboardDto
+    {
+        public int TotalMembers { get; set; }
+        public int MyTotalSongs { get; set; }
+        public int MyTotalPlaylists { get; set; }
+        public int MyTotalReviews { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrWhiteSpace(UserState.MemberName))
+        {
+            NavManager.NavigateTo("/login");
+            return;
+        }
+
+        var currentUser = UserState.MemberName;
+
+        try
+        {
+            errorMessage = null;
+            var stats = await Http.GetFromJsonAsync<DashboardDto>($"api/dashboard/stats?username={currentUser}");
+
+            if (stats != null)
+            {
+                totalMembers = stats.TotalMembers;
+                myTotalSongs = stats.MyTotalSongs;
+                myTotalPlaylists = stats.MyTotalPlaylists;
+                myTotalReviews = stats.MyTotalReviews;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+        }
+    }
+
+    private void GoToLounge()
+    {
+        NavManager.NavigateTo("/lounge-room");
+    }
+}

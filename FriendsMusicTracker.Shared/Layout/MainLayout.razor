@@ -1,0 +1,132 @@
+﻿@inherits LayoutComponentBase
+@inject FriendsMusicTracker.Data.UserState UserState
+@inject NavigationManager NavManager
+@implements IDisposable
+
+<div class="page custom-page-bg">
+    @if (UserState.IsLoggedIn)
+    {
+        <div class="sidebar shadow-lg">
+            <NavMenu />
+        </div>
+
+        <main class="main-content-wrapper">
+
+            <article class="content p-4 p-md-5 w-100 position-relative z-1">
+                @Body
+            </article>
+
+            <GlobalChat />
+
+        </main>
+    }
+    else
+    {
+        <main class="w-100 login-bg">
+            <article class="content w-100 d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+                @Body
+            </article>
+        </main>
+    }
+</div>
+
+<style>
+    /* Premium Dark Theme Background */
+    .custom-page-bg {
+        background-color: #0a0a0a;
+        background-image: radial-gradient(circle at top right, rgba(255, 193, 7, 0.05), transparent 40%), radial-gradient(circle at bottom left, rgba(75, 27, 75, 0.08), transparent 40%);
+        height: 100vh; /* 🔒 Locked to exact screen height */
+        display: flex;
+        overflow: hidden; /* Stops the whole page from scrolling */
+    }
+
+    .login-bg {
+        background-color: #000;
+    }
+
+    /* Sidebar Layout Constraint */
+    .sidebar {
+        width: 280px;
+        height: 100vh; /* 🔒 Forces sidebar to go all the way down */
+        flex-shrink: 0;
+        z-index: 100;
+        background: transparent;
+    }
+
+    /* Main Content Area */
+    .main-content-wrapper {
+        flex-grow: 1;
+        height: 100vh; /* 🔒 The scrollbar now lives INSIDE this box only! */
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        overflow-x: hidden;
+        position: relative;
+    }
+
+        /* Custom Scrollbar for Main Content */
+        .main-content-wrapper::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .main-content-wrapper::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+        }
+
+        .main-content-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(255, 193, 7, 0.3);
+            border-radius: 10px;
+        }
+
+            .main-content-wrapper::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 193, 7, 0.6);
+            }
+
+    /* Mobile Responsiveness */
+    @@media (max-width: 767.98px) {
+        .custom-page-bg {
+            flex-direction: column;
+        }
+
+        .sidebar {
+            width: 100%;
+            height: auto;
+            z-index: 1050;
+        }
+
+        .main-content-wrapper {
+            height: calc(100vh - 78px);
+        }
+
+        .content {
+            padding: 1.5rem !important;
+        }
+    }
+</style>
+
+@code {
+    protected override void OnInitialized()
+    {
+        UserState.OnChange += StateHasChanged;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        bool isOnLoginPage = NavManager.Uri.EndsWith("/login", StringComparison.OrdinalIgnoreCase);
+
+        if (!UserState.IsLoggedIn && !isOnLoginPage)
+        {
+            NavManager.NavigateTo("/login");
+        }
+    }
+
+    public void Dispose()
+    {
+        UserState.OnChange -= StateHasChanged;
+    }
+
+    private void Logout()
+    {
+        UserState.Logout();
+    }
+}

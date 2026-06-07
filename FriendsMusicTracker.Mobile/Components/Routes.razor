@@ -1,0 +1,14 @@
+﻿<Router AppAssembly="@typeof(FriendsMusicTracker.Shared.Pages.Home).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="@typeof(FriendsMusicTracker.Shared.Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(FriendsMusicTracker.Shared.Layout.MainLayout)">
+            <div class="p-4 text-center">
+                <h3>Page not found</h3>
+                <p>Sorry, there's nothing at this address.</p>
+            </div>
+        </LayoutView>
+    </NotFound>
+</Router>

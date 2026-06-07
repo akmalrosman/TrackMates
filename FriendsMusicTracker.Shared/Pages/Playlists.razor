@@ -1,0 +1,496 @@
+﻿@page "/playlists"
+@using FriendsMusicTracker.Models
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject UserState UserState
+
+<div class="container-fluid mt-4 text-white pb-5 px-md-4">
+
+    @* Premium Header *@
+    <div class="d-flex align-items-center mb-4 gap-3">
+        <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center shadow-lg" style="width: 55px; height: 55px;">
+            <span class="fs-3">📋</span>
+        </div>
+        <div>
+            <h1 class="fw-bold mb-0 text-warning" style="letter-spacing: -1px; text-shadow: 0 0 15px rgba(255, 193, 7, 0.3);">My Private Playlists</h1>
+            <p class="text-white-50 mb-0">Curate your personal mixes and drop tracks into them.</p>
+        </div>
+    </div>
+
+    @* Error banner *@
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="glass-error-banner mb-4 d-flex align-items-center gap-2 shadow-sm">
+            <span class="fs-5">⚠️</span>
+            <div>
+                <strong>Network Error:</strong> @errorMessage
+            </div>
+        </div>
+    }
+
+    <div class="row g-4">
+        @* LEFT COLUMN: Create/Edit & List of Playlists *@
+        <div class="col-12 col-lg-5 d-flex flex-column gap-4">
+
+            @* Add/Rename Form Panel *@
+            <div class="glass-panel p-4 shadow-lg">
+                <h5 class="fw-bold mb-3 text-white d-flex align-items-center gap-2">
+                    @(isEditing ? "✏️ Rename Playlist" : "➕ Create New Mix")
+                </h5>
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="text" class="form-control custom-input flex-grow-1" @bind="currentPlaylist.PlaylistName" placeholder="e.g., Late Night Lo-Fi" />
+
+                    @if (isEditing)
+                    {
+                        <button class="btn btn-outline-light px-3 shadow-sm rounded-pill" @onclick="CancelEdit">Cancel</button>
+                        <button class="btn btn-success px-4 fw-bold shadow-sm rounded-pill" @onclick="SavePlaylist">Save</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-warning px-4 fw-bold shadow-sm custom-btn-glow rounded-pill text-dark" @onclick="SavePlaylist">
+                            Create
+                        </button>
+                    }
+                </div>
+            </div>
+
+            @* Playlists List Panel *@
+            <div class="glass-panel p-3 shadow-lg d-flex flex-column flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center mb-3 px-2 border-bottom border-secondary border-opacity-25 pb-3">
+                    <h5 class="fw-bold mb-0 text-white mt-1">💽 Your Personal Decks</h5>
+                </div>
+
+                <div class="flex-grow-1">
+                    @if (playlists == null || !playlists.Any())
+                    {
+                        <div class="text-center p-4 text-white-50">
+                            <span class="display-6 opacity-25 d-block mb-2">📭</span>
+                            <p class="small">You haven't created any playlists yet. Start above!</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var playlist in playlists)
+                        {
+                            bool isActive = selectedPlaylist?.Id == playlist.Id;
+                            <div class="track-row p-3 rounded-3 d-flex align-items-center gap-3 mb-2 @(isActive ? "playing-row" : "")" style="cursor: pointer;" @onclick="() => SelectPlaylist(playlist)">
+
+                                <div class="text-center" style="width: 30px;">
+                                    <span class="fs-4 @(isActive ? "text-warning" : "text-white-50")">@(isActive ? "💿" : "📁")</span>
+                                </div>
+
+                                <div class="flex-grow-1 text-truncate">
+                                    <h6 class="mb-0 fw-bold text-truncate @(isActive ? "text-warning" : "text-white")">@playlist.PlaylistName</h6>
+                                    <span class="text-white-50 small text-truncate">Created | @playlist.CreatedDate.ToString("dd MMM yyyy")</span>
+                                </div>
+
+                                <div class="d-flex gap-2 align-items-center" @onclick:stopPropagation="true">
+                                    <button class="btn btn-sm btn-outline-light border-0 action-btn text-white-50 hover-white" @onclick="() => EditPlaylist(playlist)" title="Rename">✏️</button>
+                                    <button class="btn btn-sm btn-outline-danger border-0 action-btn text-white-50 hover-danger" @onclick="() => DeletePlaylist(playlist.Id)" title="Delete">🗑️</button>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* RIGHT COLUMN: Playlist Details & Tracks *@
+        <div class="col-12 col-lg-7">
+            @if (selectedPlaylist == null)
+            {
+                <div class="glass-panel d-flex justify-content-center align-items-center h-100 p-5 shadow-lg text-center border-0" style="min-height: 400px; background: rgba(0,0,0,0.2);">
+                    <div>
+                        <span class="display-1 opacity-25 mb-3 d-block">👈</span>
+                        <h5 class="text-white-50">Click one of your playlists to manage or add tracks!</h5>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="glass-panel p-0 shadow-lg border-warning d-flex flex-column h-100 fade-in">
+
+                    @* Playlist Header *@
+                    <div class="p-4 bg-black bg-opacity-50 border-bottom border-warning d-flex justify-content-between align-items-center rounded-top-4">
+                        <div>
+                            <h4 class="mb-1 text-warning fw-bold d-flex align-items-center gap-2">
+                                <span class="pulse-dot"></span> @selectedPlaylist.PlaylistName
+                            </h4>
+                            <span class="text-white-50 small">Curated by @selectedPlaylist.CuratorName</span>
+                        </div>
+                        <button class="btn-close btn-close-white shadow-none" @onclick="() => selectedPlaylist = null"></button>
+                    </div>
+
+                    @* Add Song Tool *@
+                    <div class="p-3 bg-dark bg-opacity-50 border-bottom border-secondary border-opacity-25 d-flex align-items-end gap-2">
+                        <div class="flex-grow-1">
+                            <label class="form-label fw-bold small text-uppercase text-white-50 tracking-wide mb-2">Drop a track from your library</label>
+                            <select class="form-select custom-input" @bind="selectedSongIdToAdd">
+                                <option value="0">-- Select a Track --</option>
+                                @foreach (var s in globalSongs)
+                                {
+                                    <option value="@s.Id">@s.Title (by @s.Artist)</option>
+                                }
+                            </select>
+                        </div>
+                        <button class="btn btn-warning fw-bold shadow-sm custom-btn-glow px-4 py-2 rounded-3 text-dark d-flex align-items-center gap-2" @onclick="AddSongToPlaylist">
+                            <span>➕</span> Add
+                        </button>
+                    </div>
+
+                    @* Playlist Tracks List *@
+                    <div class="p-3 flex-grow-1">
+                        @if (currentPlaylistSongs == null || !currentPlaylistSongs.Any())
+                        {
+                            <div class="text-center p-5 mt-3">
+                                <span class="display-6 opacity-25 d-block mb-3">👻</span>
+                                <p class="text-white-50">This playlist is empty. Add some tracks using the selector above!</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @for (int i = 0; i < currentPlaylistSongs.Count; i++)
+                            {
+                                var ps = currentPlaylistSongs[i];
+                                var matchedSong = GetSongDetails(ps.SongId);
+
+                                if (matchedSong != null)
+                                {
+                                    <div class="track-row p-3 rounded-3 d-flex align-items-center gap-3 mb-2">
+
+                                        <div class="text-white-50 fw-bold text-center" style="width: 25px;">
+                                            @(i + 1)
+                                        </div>
+
+                                        <div class="flex-grow-1 text-truncate">
+                                            <h6 class="mb-0 fw-bold text-white text-truncate">@matchedSong.Title</h6>
+                                            <span class="text-white-50 small text-truncate">@matchedSong.Artist</span>
+                                        </div>
+
+                                        <button class="btn btn-sm btn-outline-danger border-0 action-btn text-white-50 hover-danger px-2" title="Remove from playlist" @onclick="() => RemoveSongFromPlaylist(ps.Id)">
+                                            ✖
+                                        </button>
+
+                                    </div>
+                                }
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ✨ Glassmorphic Panels */
+    .glass-panel {
+        background: rgba(20, 20, 20, 0.4);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+    }
+
+    /* 🔴 Glassmorphic Error Banner */
+    .glass-error-banner {
+        background: rgba(217, 33, 33, 0.15);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(217, 33, 33, 0.3);
+        border-left: 4px solid #d92121;
+        padding: 15px 20px;
+        border-radius: 12px;
+        color: #ffcccc;
+    }
+
+    /* ⌨️ Custom Inputs (Includes styling for the Select Dropdown) */
+    .custom-input {
+        background: rgba(0, 0, 0, 0.4) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+        .custom-input:focus {
+            background: rgba(0, 0, 0, 0.8) !important;
+            border-color: #ffc107 !important;
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.2) !important;
+        }
+
+    .form-select.custom-input option {
+        background: #1a1a1a;
+        color: #fff;
+    }
+
+    .tracking-wide {
+        letter-spacing: 0.8px;
+    }
+
+    /* 🎶 Track List Rows */
+    .track-row {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        transition: all 0.2s ease;
+    }
+
+        .track-row:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255, 193, 7, 0.2);
+            transform: translateX(4px);
+        }
+
+    .playing-row {
+        background: rgba(255, 193, 7, 0.1) !important;
+        border: 1px solid rgba(255, 193, 7, 0.4) !important;
+    }
+
+    /* 🎛️ Action Buttons */
+    .hover-white:hover {
+        color: #fff !important;
+        transform: scale(1.1);
+    }
+
+    .hover-danger:hover {
+        color: #dc3545 !important;
+        transform: scale(1.1);
+    }
+
+    .custom-btn-glow {
+        transition: all 0.3s;
+    }
+
+        .custom-btn-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 193, 7, 0.4) !important;
+        }
+
+    /* Utilities & Animations */
+    .pulse-dot {
+        width: 10px;
+        height: 10px;
+        background-color: #ffc107;
+        border-radius: 50%;
+        display: inline-block;
+        animation: pulse-ring 2s infinite;
+    }
+
+    @@keyframes pulse-ring {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+        }
+
+        70% {
+            box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+        }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+</style>
+
+@code {
+    private List<Playlist> playlists = new();
+    private List<Song> globalSongs = new();
+    private List<PlaylistSong> currentPlaylistSongs = new();
+
+    private Playlist currentPlaylist = new();
+    private Playlist? selectedPlaylist = null;
+    private int selectedSongIdToAdd = 0;
+    private bool isEditing = false;
+    private string? errorMessage;
+
+    // Shifted endpoints to relative paths to avoid localhost routing loopbacks
+    private readonly string ApiUrlPlaylists = "api/playlists";
+    private readonly string ApiUrlSongs = "api/songs";
+    private readonly string ApiUrlPlaylistSongs = "api/playlistsongs";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadInitialData();
+    }
+
+    private async Task LoadInitialData()
+    {
+        try
+        {
+            errorMessage = null;
+            // Fetch Playlists
+            playlists = await Http.GetFromJsonAsync<List<Playlist>>($"{ApiUrlPlaylists}?curator={UserState.MemberName}") ?? new();
+
+            // Fetch User's Songs (for the dropdown)
+            globalSongs = await Http.GetFromJsonAsync<List<Song>>($"{ApiUrlSongs}?addedBy={UserState.MemberName}") ?? new();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine($"Error fetching initial data: {ex.Message}");
+        }
+    }
+
+    private async Task LoadPlaylistSongs(int playlistId)
+    {
+        try
+        {
+            errorMessage = null;
+            // Fetch the mappings for the selected playlist
+            currentPlaylistSongs = await Http.GetFromJsonAsync<List<PlaylistSong>>($"{ApiUrlPlaylistSongs}/playlist/{playlistId}") ?? new();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine($"Error fetching playlist songs: {ex.Message}");
+        }
+    }
+
+    private Song? GetSongDetails(int songId) =>
+        globalSongs.FirstOrDefault(s => s.Id == songId);
+
+    private async Task SelectPlaylist(Playlist playlist)
+    {
+        selectedPlaylist = playlist;
+        selectedSongIdToAdd = 0;
+        await LoadPlaylistSongs(playlist.Id);
+    }
+
+    private async Task SavePlaylist()
+    {
+        if (string.IsNullOrWhiteSpace(currentPlaylist.PlaylistName)) return;
+
+        try
+        {
+            errorMessage = null;
+            if (isEditing)
+            {
+                // Update Playlist
+                await Http.PutAsJsonAsync($"{ApiUrlPlaylists}/{currentPlaylist.Id}", currentPlaylist);
+            }
+            else
+            {
+                currentPlaylist.CreatedDate = DateTime.Now;
+                currentPlaylist.CuratorName = UserState.MemberName;
+
+                // Create Playlist
+                await Http.PostAsJsonAsync(ApiUrlPlaylists, currentPlaylist);
+            }
+
+            if (selectedPlaylist?.Id == currentPlaylist.Id)
+            {
+                selectedPlaylist.PlaylistName = currentPlaylist.PlaylistName;
+            }
+
+            currentPlaylist = new Playlist();
+            isEditing = false;
+            await LoadInitialData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine($"Error saving playlist: {ex.Message}");
+        }
+    }
+
+    private void EditPlaylist(Playlist playlist)
+    {
+        currentPlaylist = new Playlist
+        {
+            Id = playlist.Id,
+            PlaylistName = playlist.PlaylistName,
+            CreatedDate = playlist.CreatedDate,
+            CuratorName = playlist.CuratorName
+        };
+        isEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+        currentPlaylist = new Playlist();
+        isEditing = false;
+    }
+
+    private async Task DeletePlaylist(int id)
+    {
+        try
+        {
+            errorMessage = null;
+            // Delete Playlist
+            await Http.DeleteAsync($"{ApiUrlPlaylists}/{id}");
+
+            if (selectedPlaylist?.Id == id) selectedPlaylist = null;
+            await LoadInitialData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine($"Error deleting playlist: {ex.Message}");
+        }
+    }
+
+    private async Task AddSongToPlaylist()
+    {
+        if (selectedPlaylist == null || selectedSongIdToAdd == 0) return;
+
+        bool alreadyExists = currentPlaylistSongs.Any(ps => ps.SongId == selectedSongIdToAdd);
+        if (alreadyExists) return;
+
+        var map = new PlaylistSong
+        {
+            PlaylistId = selectedPlaylist.Id,
+            SongId = selectedSongIdToAdd
+        };
+
+        try
+        {
+            errorMessage = null;
+            // Add song to playlist map
+            await Http.PostAsJsonAsync(ApiUrlPlaylistSongs, map);
+
+            selectedSongIdToAdd = 0;
+            await LoadPlaylistSongs(selectedPlaylist.Id);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine($"Error adding song to playlist: {ex.Message}");
+        }
+    }
+
+    private async Task RemoveSongFromPlaylist(int playlistSongId)
+    {
+        try
+        {
+            errorMessage = null;
+            // Remove song from playlist map
+            await Http.DeleteAsync($"{ApiUrlPlaylistSongs}/{playlistSongId}");
+
+            if (selectedPlaylist != null)
+            {
+                await LoadPlaylistSongs(selectedPlaylist.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine($"Error removing song from playlist: {ex.Message}");
+        }
+    }
+}

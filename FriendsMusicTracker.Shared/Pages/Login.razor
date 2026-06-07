@@ -1,0 +1,384 @@
+﻿@page "/login"
+@using FriendsMusicTracker.Models
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject UserState UserState
+@inject NavigationManager NavManager
+
+@* Added p-3 here to ensure the card doesn't touch the screen edges on mobile *@
+<div class="login-wrapper p-3">
+    <div class="login-bg-overlay"></div>
+
+    <div class="glass-card shadow-lg p-4 p-md-5 d-flex flex-column m-auto position-relative" style="max-width: 420px; width: 100%; z-index: 2;">
+
+        <div class="text-center mb-4">
+            <div class="logo-pulse mb-2">
+                <span class="display-5">🎧</span>
+            </div>
+            <h1 class="fw-bold fs-2 mb-1 text-white" style="letter-spacing: -1px;">
+                Track<span class="text-warning">Mates</span>
+            </h1>
+            <p class="text-white-50 small text-uppercase tracking-wider" style="font-size: 0.75rem;">Select Your Profile</p>
+        </div>
+
+        @* Error Banner *@
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert bg-danger bg-opacity-25 border border-danger text-white p-3 mb-4 rounded-3 d-flex align-items-center gap-3 shadow-sm">
+                <span class="fs-4">⚠️</span>
+                <div class="small lh-sm">
+                    <strong>Connection Failed</strong><br />
+                    @errorMessage
+                </div>
+            </div>
+        }
+
+        @* Loading State *@
+        @if (members == null && string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="text-center py-4">
+                <div class="equalizer-loader mx-auto mb-3">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+                <p class="text-white-50 small fw-bold text-uppercase" style="letter-spacing: 1px; font-size: 0.75rem;">Syncing Crew...</p>
+            </div>
+        }
+        else if (members != null)
+        {
+            @* Profile List *@
+            <div class="profile-list mb-3 pe-2" style="max-height: 240px; overflow-y: auto;">
+                @if (!members.Any())
+                {
+                    <p class="text-center text-white-50 small py-4">No profiles found. Start your journey below!</p>
+                }
+
+                @foreach (var member in members)
+                {
+                    <button class="profile-btn w-100 text-start border-0 rounded-4 p-3 mb-2 d-flex justify-content-between align-items-center group"
+                            @onclick="() => SelectProfile(member)">
+
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-circle shadow-sm">
+                                @(member.Name.Length > 0 ? member.Name.Substring(0, 1).ToUpper() : "🎵")
+                            </div>
+                            <span class="text-white fw-bold fs-6 tracking-tight">@member.Name</span>
+                        </div>
+
+                        <div class="play-indicator text-warning fs-5">
+                            ▶
+                        </div>
+                    </button>
+                }
+            </div>
+
+            <hr class="border-secondary opacity-25 my-3" />
+
+            @* Adjusted Create Profile Section *@
+            <div class="mt-2">
+                <label class="form-label text-white-50 fw-bold text-uppercase ms-2 mb-2" style="letter-spacing: 1px; font-size: 0.75rem;">Join The Crew</label>
+                <div class="input-group bg-dark bg-opacity-50 rounded-pill p-1 border border-secondary border-opacity-25 focus-within-glow transition-all shadow-sm">
+
+                    <span class="input-group-text bg-transparent border-0 text-white-50 ps-3 pe-1">👤</span>
+                    <input type="text" class="form-control custom-transparent-input border-0 text-white shadow-none px-2 m-0"
+                           placeholder="Enter crew name..." @bind="newMember.Name" style="font-size: 0.95rem;" />
+
+                    <button class="btn btn-warning rounded-pill px-3 fw-bold shadow-sm transition-all text-dark" style="font-size: 0.9rem;" @onclick="RegisterProfile">
+                        Join
+                    </button>
+
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .login-wrapper {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: url('https://images.unsplash.com/photo-1518609878373-06d740f60d8b?q=80&w=1000&auto=format&fit=crop') center/cover no-repeat;
+        z-index: 1050;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .login-bg-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(0,0,0,0.95) 0%, rgba(20,20,20,0.7) 100%);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        z-index: 1;
+    }
+
+    .glass-card {
+        background: rgba(30, 30, 30, 0.45);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 24px;
+        box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8);
+    }
+
+    .profile-btn {
+        background: rgba(255, 255, 255, 0.04);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+        .profile-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(6px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+    .avatar-circle {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4b1b4b 0%, #1e1b4b 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #ffc107;
+        font-size: 1.1rem;
+        border: 2px solid rgba(255,255,255,0.05);
+        transition: all 0.3s ease;
+    }
+
+    .profile-btn:hover .avatar-circle {
+        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        color: #000;
+        border-color: #ffca2c;
+        transform: scale(1.05);
+    }
+
+    .play-indicator {
+        opacity: 0;
+        transform: translateX(-15px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .profile-btn:hover .play-indicator {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    /* 🛠️ Forces the input to NEVER turn grey! */
+    .custom-transparent-input {
+        background-color: transparent !important;
+    }
+
+        .custom-transparent-input:focus {
+            background-color: transparent !important;
+            color: white;
+        }
+
+    .focus-within-glow:focus-within {
+        border-color: #ffc107 !important;
+        box-shadow: 0 0 15px rgba(255, 193, 7, 0.2);
+    }
+
+    .btn-warning:hover {
+        transform: scale(1.03);
+        box-shadow: 0 6px 15px rgba(255, 193, 7, 0.3);
+    }
+
+    .profile-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .profile-list::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.2);
+        border-radius: 10px;
+    }
+
+    .profile-list::-webkit-scrollbar-thumb {
+        background: rgba(255,193,7,0.3);
+        border-radius: 10px;
+    }
+
+        .profile-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,193,7,0.8);
+        }
+
+    .equalizer-loader {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 4px;
+        height: 30px;
+    }
+
+        .equalizer-loader span {
+            display: block;
+            width: 6px;
+            background-color: #ffc107;
+            border-radius: 3px;
+            animation: eq-bounce 0.8s infinite alternate;
+        }
+
+            .equalizer-loader span:nth-child(1) {
+                height: 40%;
+                animation-delay: -0.4s;
+            }
+
+            .equalizer-loader span:nth-child(2) {
+                height: 100%;
+                animation-delay: -0.2s;
+            }
+
+            .equalizer-loader span:nth-child(3) {
+                height: 60%;
+                animation-delay: -0.6s;
+            }
+
+            .equalizer-loader span:nth-child(4) {
+                height: 80%;
+                animation-delay: -0.1s;
+            }
+
+    @@keyframes eq-bounce {
+        0% {
+            height: 20%;
+        }
+
+        100% {
+            height: 100%;
+        }
+    }
+
+    .logo-pulse {
+        animation: slow-pulse 3s infinite;
+    }
+
+    @@keyframes slow-pulse {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .tracking-wider {
+        letter-spacing: 0.1em;
+    }
+
+    .tracking-tight {
+        letter-spacing: -0.02em;
+    }
+
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+    /* 📱 MOBILE RESPONSIVE ADJUSTMENTS */
+    @@media (max-width: 575.98px) {
+        .glass-card {
+            padding: 1.5rem !important; /* Slightly tighter padding on small screens */
+            border-radius: 20px;
+        }
+
+        .avatar-circle {
+            width: 36px;
+            height: 36px;
+            font-size: 1rem;
+        }
+
+        .profile-btn {
+            padding: 0.75rem 1rem !important; /* Keep buttons easy to tap but compact */
+        }
+
+        .input-group .btn {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+
+        .play-indicator {
+            font-size: 1rem !important;
+        }
+    }
+</style>
+
+@code {
+    private List<Member>? members;
+    private Member newMember = new Member();
+    private string? errorMessage;
+
+    private readonly string ApiUrl = "api/members";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (UserState.IsLoggedIn)
+        {
+            NavManager.NavigateTo("/");
+            return;
+        }
+
+        await LoadMembers();
+    }
+
+    private async Task LoadMembers()
+    {
+        try
+        {
+            errorMessage = null;
+            members = await Http.GetFromJsonAsync<List<Member>>(ApiUrl);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine($"Error loading members from API: {ex.Message}");
+        }
+    }
+
+    private void SelectProfile(Member member)
+    {
+        UserState.Login(member.Id, member.Name);
+        NavManager.NavigateTo("/");
+    }
+
+    private async Task RegisterProfile()
+    {
+        if (string.IsNullOrWhiteSpace(newMember.Name)) return;
+
+        try
+        {
+            errorMessage = null;
+            var response = await Http.PostAsJsonAsync(ApiUrl, newMember);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var createdMember = await response.Content.ReadFromJsonAsync<Member>();
+
+                if (createdMember != null)
+                {
+                    UserState.Login(createdMember.Id, createdMember.Name);
+                    NavManager.NavigateTo("/");
+                }
+            }
+            else
+            {
+                errorMessage = $"Failed to create profile. Server returned: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine($"Error registering member via API: {ex.Message}");
+        }
+    }
+}

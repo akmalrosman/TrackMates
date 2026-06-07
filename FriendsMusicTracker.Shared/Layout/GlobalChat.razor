@@ -1,0 +1,193 @@
+﻿@using FriendsMusicTracker.Services
+@using FriendsMusicTracker.Data
+@inject ChatService Chat
+@inject UserState UserState
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+@if (UserState.IsLoggedIn)
+{
+    <button class="btn btn-warning rounded-circle shadow-lg chat-toggle-btn d-flex align-items-center justify-content-center"
+            @onclick="ToggleChat"
+            style="@(isChatOpen ? "display: none !important;" : "")">
+        <span class="fs-3">💬</span>
+
+        @if (unreadCount > 0)
+        {
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-2 border-dark pulse-animation" style="font-size: 0.75rem;">
+                @if (unreadCount > 9)
+                {
+                    <span>9+</span>
+                }
+                else
+                {
+                    @unreadCount
+                }
+                <span class="visually-hidden">unread messages</span>
+            </span>
+        }
+    </button>
+
+    <div class="card bg-dark border-secondary shadow-lg chat-window"
+         style="@(isChatOpen ? "display: flex;" : "display: none;")">
+
+        <div class="card-header bg-black border-secondary d-flex justify-content-between align-items-center p-2">
+            <h6 class="mb-0 text-white fw-bold"><span class="text-warning">Lounge</span> Chat</h6>
+            <button class="btn btn-sm btn-outline-light border-0" @onclick="ToggleChat">✖</button>
+        </div>
+
+        <div class="card-body p-2 chat-messages-container" id="global-chatbox">
+            @if (!Chat.Messages.Any())
+            {
+                <p class="text-white-50 small text-center mt-4">Be the first to drop a message! 🎤</p>
+            }
+            else
+            {
+                @foreach (var msg in Chat.Messages)
+                {
+                    bool isMe = msg.User == UserState.MemberName;
+                    <div class="mb-2 d-flex flex-column @(isMe ? "align-items-end" : "align-items-start")">
+                        <span class="small text-white-50 mb-1" style="font-size: 0.7rem;">@msg.User • @msg.Timestamp.ToString("t")</span>
+                        <div class="p-2 rounded @(isMe ? "bg-warning text-dark fw-bold" : "bg-secondary text-white")" style="max-width: 85%; font-size: 0.9rem;">
+                            @msg.Text
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="card-footer bg-black border-secondary p-2">
+            <form @onsubmit="SendMessage" class="input-group">
+                <input type="text" class="form-control form-control-sm bg-dark text-white border-secondary"
+                       placeholder="Type a message..." @bind="newMessage" @bind:event="oninput" />
+                <button type="submit" class="btn btn-sm btn-warning fw-bold" disabled="@string.IsNullOrWhiteSpace(newMessage)">Send</button>
+            </form>
+        </div>
+    </div>
+}
+
+<style>
+    .chat-toggle-btn {
+        position: fixed !important;
+        bottom: 25px;
+        right: 25px;
+        width: 65px;
+        height: 65px;
+        z-index: 1050;
+        transition: transform 0.2s;
+    }
+
+        .chat-toggle-btn:hover {
+            transform: scale(1.1);
+        }
+
+    .chat-window {
+        position: fixed !important;
+        bottom: 25px;
+        right: 25px;
+        width: 340px;
+        height: 450px;
+        flex-direction: column;
+        z-index: 1050;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .chat-messages-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #e3a008 #1a1d20;
+    }
+
+        .chat-messages-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages-container::-webkit-scrollbar-thumb {
+            background-color: #e3a008;
+            border-radius: 3px;
+        }
+
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0% {
+            transform: translate(-50%, -50%) scale(1);
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+        }
+
+        70% {
+            transform: translate(-50%, -50%) scale(1.1);
+            box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+        }
+
+        100% {
+            transform: translate(-50%, -50%) scale(1);
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+        }
+    }
+</style>
+
+@code {
+    private bool isChatOpen = false;
+    private string newMessage = string.Empty;
+    private int unreadCount = 0;
+
+    protected override void OnInitialized()
+    {
+        Chat.OnMessageAdded += UpdateChat;
+    }
+
+    private async void UpdateChat()
+    {
+        if (!isChatOpen)
+        {
+            var lastMessage = Chat.Messages.LastOrDefault();
+            if (lastMessage != null && lastMessage.User != UserState.MemberName)
+            {
+                unreadCount++;
+            }
+        }
+
+        await InvokeAsync(StateHasChanged);
+
+        if (isChatOpen)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("eval", "var cb = document.getElementById('global-chatbox'); if(cb) cb.scrollTop = cb.scrollHeight;");
+            }
+            catch { }
+        }
+    }
+
+    private void ToggleChat()
+    {
+        isChatOpen = !isChatOpen;
+
+        if (isChatOpen)
+        {
+            unreadCount = 0;
+            UpdateChat();
+        }
+    }
+
+    // Converted to async Task and added await so the message completes sending over the network
+    private async Task SendMessage()
+    {
+        if (!string.IsNullOrWhiteSpace(newMessage))
+        {
+            await Chat.SendMessage(UserState.MemberName, newMessage);
+            newMessage = string.Empty;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        Chat.OnMessageAdded -= UpdateChat;
+    }
+}

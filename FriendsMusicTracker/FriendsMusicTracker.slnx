@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../FriendsMusicTracker.Api/FriendsMusicTracker.Api.csproj" Id="c3b91f45-ada9-4b9d-bd51-cc8a41e74d6b" />
+  <Project Path="../FriendsMusicTracker.Mobile/FriendsMusicTracker.Mobile.csproj" Id="9741a0f3-d3cb-4070-9f46-6dabafaca92e" />
+  <Project Path="../FriendsMusicTracker.Shared/FriendsMusicTracker.Shared.csproj" />
+  <Project Path="FriendsMusicTracker/FriendsMusicTracker.csproj" />
+</Solution>

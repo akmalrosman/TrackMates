@@ -1,0 +1,469 @@
+﻿@page "/songs"
+@using FriendsMusicTracker.Models
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject UserState UserState
+@inject NavigationManager NavManager
+
+<div class="container-fluid mt-4 text-white pb-5 px-md-4">
+
+    @* Premium Header *@
+    <div class="d-flex align-items-center mb-4 gap-3">
+        <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center shadow-lg" style="width: 55px; height: 55px;">
+            <span class="fs-3">🎸</span>
+        </div>
+        <div>
+            <h1 class="fw-bold mb-0 text-warning" style="letter-spacing: -1px; text-shadow: 0 0 15px rgba(255, 193, 7, 0.3);">Personal Track Deck</h1>
+            <p class="text-white-50 mb-0">Manage your library and preview your tracks.</p>
+        </div>
+    </div>
+
+    @* Error banner *@
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="glass-error-banner mb-4 d-flex align-items-center gap-2 shadow-sm">
+            <span class="fs-5">⚠️</span>
+            <div>
+                <strong>Network Error:</strong> @errorMessage
+            </div>
+        </div>
+    }
+
+    @* Add/Edit Form Panel (Top) *@
+    <div class="glass-panel p-4 shadow-lg mb-4">
+        <h5 class="fw-bold mb-3 text-white d-flex align-items-center gap-2">
+            @(isEditing ? "✏️ Edit Track Details" : "➕ Add New Track")
+        </h5>
+
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label text-white-50 small fw-bold text-uppercase tracking-wide">Song Title</label>
+                <input type="text" class="form-control custom-input" @bind="currentSong.Title" placeholder="e.g., I'll Be There For You" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label text-white-50 small fw-bold text-uppercase tracking-wide">Artist</label>
+                <input type="text" class="form-control custom-input" @bind="currentSong.Artist" placeholder="e.g., The Rembrandts" />
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-white-50 small fw-bold text-uppercase tracking-wide">Release Year</label>
+                <input type="number" class="form-control custom-input" @bind="currentSong.ReleaseYear" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-white-50 small fw-bold text-uppercase tracking-wide">YouTube URL</label>
+                <input type="text" class="form-control custom-input" @bind="currentSong.YoutubeUrl" placeholder="https://youtu.be/..." />
+            </div>
+            <div class="col-12 text-end mt-4 pt-3 border-top border-secondary border-opacity-25">
+                @if (isEditing)
+                {
+                    <button class="btn btn-outline-light px-4 me-2 shadow-sm rounded-pill" @onclick="CancelEdit">Cancel</button>
+                    <button class="btn btn-success px-4 fw-bold shadow-sm rounded-pill" @onclick="SaveSong">Save Changes</button>
+                }
+                else
+                {
+                    <button class="btn btn-warning px-4 fw-bold shadow-sm custom-btn-glow rounded-pill text-dark" @onclick="SaveSong">
+                        Add to Library
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* Dynamic Grid: Tracklist & Pop-up Player *@
+    <div class="row g-4">
+        @* The Tracklist - REMOVED transition-all here to prevent flex-wrapping glitch! *@
+        <div class="@(isPlaying ? "col-12 col-lg-7" : "col-12")">
+            <div class="glass-panel p-3 shadow-lg d-flex flex-column h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3 px-2 border-bottom border-secondary border-opacity-25 pb-3">
+                    <h5 class="fw-bold mb-0 text-white mt-1">📻 My Tracklist</h5>
+                    <span class="badge rounded-pill bg-dark border border-warning text-warning shadow-sm px-3 py-2">🎧 @UserState.MemberName</span>
+                </div>
+
+                <div class="track-list-container flex-grow-1">
+                    @if (songs == null && string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="d-flex justify-content-center align-items-center p-5 text-white-50 gap-3">
+                            <div class="spinner-border text-warning" role="status"></div>
+                            <span>Syncing library...</span>
+                        </div>
+                    }
+                    else if (songs != null && !songs.Any())
+                    {
+                        <div class="text-center p-5">
+                            <span class="display-5 opacity-25 d-block mb-3">📭</span>
+                            <p class="text-white-50">No songs added yet. Start building your personal library above!</p>
+                        </div>
+                    }
+                    else if (songs != null)
+                    {
+                        @for (int i = 0; i < songs.Count; i++)
+                        {
+                            var song = songs[i];
+                            bool isPlayingThis = (playingSong?.Id == song.Id);
+
+                            <div class="track-row p-3 rounded-3 d-flex align-items-center gap-3 mb-2 @(isPlayingThis ? "playing-row" : "")">
+                                <div class="text-white-50 fw-bold" style="width: 25px; text-align: center;">
+                                    @if (isPlayingThis)
+                                    {
+                                        <div class="eq-container d-flex align-items-end justify-content-center gap-1 active" style="height: 15px;">
+                                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        @(i + 1)
+                                    }
+                                </div>
+
+                                <div class="flex-grow-1 text-truncate">
+                                    <h6 class="mb-0 fw-bold text-truncate @(isPlayingThis ? "text-warning" : "text-white")">@song.Title</h6>
+                                    <span class="text-white-50 small text-truncate">@song.Artist <span class="badge bg-black bg-opacity-50 ms-1">@song.ReleaseYear</span></span>
+                                </div>
+
+                                <div class="d-flex gap-2 align-items-center">
+                                    <button class="btn btn-sm btn-outline-light border-0 action-btn text-white-50 hover-white" @onclick="() => EditSong(song)" title="Edit">✏️</button>
+                                    <button class="btn btn-sm btn-outline-danger border-0 action-btn text-white-50 hover-danger" @onclick="() => DeleteSong(song.Id)" title="Delete">🗑️</button>
+
+                                    @if (!string.IsNullOrWhiteSpace(song.YoutubeUrl))
+                                    {
+                                        <button class="btn btn-warning rounded-circle play-mini-btn shadow-sm d-flex align-items-center justify-content-center ms-2" style="width: 38px; height: 38px;" @onclick="() => PlayTrack(song)">
+                                            <span class="text-dark fw-bold fs-6" style="margin-left: 2px;">▶</span>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small fst-italic ms-2" style="width: 38px; text-align: center;">No Link</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* The Pop-up Player (Appears seamlessly on the right side) *@
+        @if (isPlaying)
+        {
+            <div class="col-12 col-lg-5 fade-in">
+                <div class="glass-panel p-0 shadow-lg border-warning sticky-top player-card overflow-hidden" style="top: 20px;">
+                    <div class="p-3 bg-black bg-opacity-50 border-bottom border-warning d-flex justify-content-between align-items-center">
+                        <div class="d-flex flex-column text-truncate pe-3">
+                            <h5 class="mb-0 text-warning d-flex align-items-center gap-2 fw-bold text-truncate">
+                                <span class="pulse-dot"></span> @playingSong?.Title
+                            </h5>
+                            <span class="text-white-50 small text-truncate">@playingSong?.Artist</span>
+                        </div>
+                        <button type="button" class="btn-close btn-close-white shadow-none" @onclick="StopTrack"></button>
+                    </div>
+
+                    <div class="bg-black text-center">
+                        <div class="ratio ratio-16x9">
+                            <iframe src="https://www.youtube.com/embed/@activeEmbedId?autoplay=1"
+                                    title="YouTube video player"
+                                    frameborder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen>
+                            </iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    /* ✨ Glassmorphic Panels */
+    .glass-panel {
+        background: rgba(20, 20, 20, 0.4);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+    }
+
+    /* 🔴 Glassmorphic Error Banner */
+    .glass-error-banner {
+        background: rgba(217, 33, 33, 0.15);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(217, 33, 33, 0.3);
+        border-left: 4px solid #d92121;
+        padding: 15px 20px;
+        border-radius: 12px;
+        color: #ffcccc;
+    }
+
+    /* ⌨️ Custom Inputs */
+    .custom-input {
+        background: rgba(0, 0, 0, 0.4) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+        .custom-input:focus {
+            background: rgba(0, 0, 0, 0.6) !important;
+            border-color: #ffc107 !important;
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.2) !important;
+        }
+
+    .tracking-wide {
+        letter-spacing: 0.8px;
+    }
+
+    /* 🎶 Track List Rows */
+    .track-row {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        transition: all 0.2s ease;
+    }
+
+        .track-row:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255, 193, 7, 0.2);
+            transform: translateX(4px);
+        }
+
+    .playing-row {
+        background: rgba(255, 193, 7, 0.1) !important;
+        border: 1px solid rgba(255, 193, 7, 0.3) !important;
+    }
+
+    /* 🎛️ Action Buttons */
+    .hover-white:hover {
+        color: #fff !important;
+        transform: scale(1.1);
+    }
+
+    .hover-danger:hover {
+        color: #dc3545 !important;
+        transform: scale(1.1);
+    }
+
+    .play-mini-btn {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+        .play-mini-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.5) !important;
+        }
+
+    .custom-btn-glow {
+        transition: all 0.3s;
+    }
+
+        .custom-btn-glow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 193, 7, 0.4) !important;
+        }
+
+    /* 🎬 Player Animation */
+    .player-card {
+        box-shadow: 0 10px 30px rgba(255, 193, 7, 0.15) !important;
+    }
+
+    .pulse-dot {
+        width: 10px;
+        height: 10px;
+        background-color: #ffc107;
+        border-radius: 50%;
+        display: inline-block;
+        animation: pulse-ring 2s infinite;
+    }
+
+    @@keyframes pulse-ring {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+        }
+
+        70% {
+            box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
+        }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Equalizer for Active Track */
+    .eq-bar {
+        width: 3px;
+        background-color: #ffc107;
+        border-radius: 2px;
+        height: 4px;
+        transition: height 0.15s ease-in-out;
+    }
+
+    .eq-container.active .eq-bar {
+        animation: bounce 0.5s ease-in-out infinite alternate;
+    }
+
+    .eq-container .eq-bar:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    .eq-container .eq-bar:nth-child(2) {
+        animation-delay: 0.3s;
+    }
+
+    .eq-container .eq-bar:nth-child(3) {
+        animation-delay: 0.0s;
+    }
+
+    @@keyframes bounce {
+        0% {
+            height: 4px;
+        }
+
+        100% {
+            height: 14px;
+        }
+    }
+</style>
+
+@code {
+    private List<Song>? songs;
+    private Song currentSong = new() { ReleaseYear = DateTime.Now.Year };
+    private Song? playingSong;
+    private bool isEditing = false;
+    private string activeEmbedId = string.Empty;
+    private string? errorMessage;
+    private bool isPlaying => !string.IsNullOrEmpty(activeEmbedId);
+
+    // Using relative URL for the API
+    private readonly string ApiUrl = "api/songs";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!UserState.IsLoggedIn)
+        {
+            NavManager.NavigateTo("/login");
+            return;
+        }
+        await LoadSongs();
+    }
+
+    private async Task LoadSongs()
+    {
+        try
+        {
+            errorMessage = null;
+            songs = await Http.GetFromJsonAsync<List<Song>>($"{ApiUrl}?addedBy={UserState.MemberName}") ?? new List<Song>();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine($"API Error: {ex.Message}");
+        }
+    }
+
+    private async Task SaveSong()
+    {
+        if (string.IsNullOrWhiteSpace(currentSong.Title) || string.IsNullOrWhiteSpace(currentSong.Artist)) return;
+
+        try
+        {
+            errorMessage = null;
+            if (isEditing)
+            {
+                await Http.PutAsJsonAsync($"{ApiUrl}/{currentSong.Id}", currentSong);
+            }
+            else
+            {
+                currentSong.AddedBy = UserState.MemberName;
+                await Http.PostAsJsonAsync(ApiUrl, currentSong);
+            }
+
+            currentSong = new Song { ReleaseYear = DateTime.Now.Year };
+            isEditing = false;
+            await LoadSongs();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine($"API Error saving song: {ex.Message}");
+        }
+    }
+
+    private void EditSong(Song song)
+    {
+        currentSong = new Song
+        {
+            Id = song.Id,
+            Title = song.Title,
+            Artist = song.Artist,
+            ReleaseYear = song.ReleaseYear,
+            YoutubeUrl = song.YoutubeUrl,
+            AddedBy = song.AddedBy
+        };
+        isEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+        currentSong = new Song { ReleaseYear = DateTime.Now.Year };
+        isEditing = false;
+    }
+
+    private async Task DeleteSong(int id)
+    {
+        try
+        {
+            errorMessage = null;
+            await Http.DeleteAsync($"{ApiUrl}/{id}");
+            if (playingSong?.Id == id) StopTrack();
+            await LoadSongs();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine($"API Error deleting song: {ex.Message}");
+        }
+    }
+
+    private void PlayTrack(Song song)
+    {
+        activeEmbedId = string.Empty;
+        playingSong = song;
+
+        if (song.YoutubeUrl != null)
+        {
+            if (song.YoutubeUrl.Contains("v="))
+            {
+                var parts = song.YoutubeUrl.Split("v=");
+                if (parts.Length > 1) activeEmbedId = parts[1].Split('&')[0];
+            }
+            else if (song.YoutubeUrl.Contains("youtu.be/"))
+            {
+                var parts = song.YoutubeUrl.Split("youtu.be/");
+                if (parts.Length > 1) activeEmbedId = parts[1].Split('?')[0];
+            }
+        }
+    }
+
+    private void StopTrack()
+    {
+        activeEmbedId = string.Empty;
+        playingSong = null;
+    }
+}

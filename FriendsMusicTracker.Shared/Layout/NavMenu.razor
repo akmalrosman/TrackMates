@@ -1,0 +1,267 @@
+﻿@using FriendsMusicTracker.Models
+@inject UserState UserState
+@inject NavigationManager NavManager
+
+<div class="sidebar-wrapper d-flex flex-column h-100 w-100">
+
+    @* Brand Header *@
+    <div class="top-row d-flex align-items-center justify-content-between px-4 py-4 brand-header">
+        <a class="navbar-brand fw-bold fs-4 d-flex align-items-center gap-2 text-decoration-none" href="">
+            <span class="logo-pulse">🎧</span>
+            <span class="text-white" style="letter-spacing: -1px;">Track<span class="text-warning">Mates</span></span>
+        </a>
+        <button title="Navigation menu" class="navbar-toggler custom-toggler d-md-none bg-transparent border-0 text-white shadow-none" @onclick="ToggleNavMenu">
+            <span class="fs-2">☰</span>
+        </button>
+    </div>
+
+    @* Navigation Links & Profile *@
+    <div class="@NavMenuCssClass nav-scrollable flex-grow-1 d-flex flex-column w-100" @onclick="ToggleNavMenu">
+
+        <nav class="flex-column gap-2 d-flex px-3 mt-3 w-100">
+            <div class="nav-item">
+                <NavLink class="nav-link custom-nav-link rounded-4 d-flex align-items-center px-3 py-3" href="" Match="NavLinkMatch.All">
+                    <span class="fs-5 me-3 nav-icon transition-all">🏠</span>
+                    <span class="fw-semibold tracking-wide">Home</span>
+                </NavLink>
+            </div>
+
+            <div class="nav-item">
+                <NavLink class="nav-link custom-nav-link rounded-4 d-flex align-items-center px-3 py-3" href="lounge-room">
+                    <span class="fs-5 me-3 nav-icon transition-all">🛋️</span>
+                    <span class="fw-semibold tracking-wide">The Lounge</span>
+                </NavLink>
+            </div>
+
+            <div class="nav-item">
+                <NavLink class="nav-link custom-nav-link rounded-4 d-flex align-items-center px-3 py-3" href="songs">
+                    <span class="fs-5 me-3 nav-icon transition-all">🎸</span>
+                    <span class="fw-semibold tracking-wide">Song Tracks</span>
+                </NavLink>
+            </div>
+
+            <div class="nav-item">
+                <NavLink class="nav-link custom-nav-link rounded-4 d-flex align-items-center px-3 py-3" href="playlists">
+                    <span class="fs-5 me-3 nav-icon transition-all">🎵</span>
+                    <span class="fw-semibold tracking-wide">My Playlists</span>
+                </NavLink>
+            </div>
+
+            <div class="nav-item">
+                <NavLink class="nav-link custom-nav-link rounded-4 d-flex align-items-center px-3 py-3" href="reviews">
+                    <span class="fs-5 me-3 nav-icon transition-all">💬</span>
+                    <span class="fw-semibold tracking-wide">Buzz & Reviews</span>
+                </NavLink>
+            </div>
+        </nav>
+
+        @* User Profile Box *@
+        @if (UserState.IsLoggedIn)
+        {
+            <div class="user-profile-section mt-auto p-3 m-3 rounded-4 glass-panel text-center transition-all">
+                <div class="avatar-circle mx-auto mb-2 shadow-sm">
+                    @(UserState.MemberName?.Length > 0 ? UserState.MemberName.Substring(0, 1).ToUpper() : "🎵")
+                </div>
+                <div class="text-white fw-bold small text-truncate px-2 mb-3">@UserState.MemberName</div>
+                <button class="btn btn-outline-warning btn-sm rounded-pill w-100 fw-bold shadow-sm" @onclick="Logout" @onclick:stopPropagation="true">
+                    Sign Out
+                </button>
+            </div>
+        }
+
+    </div>
+</div>
+
+<style>
+    /* 🌟 Fully Glassmorphic Sidebar */
+    .sidebar-wrapper {
+        background: rgba(10, 10, 10, 0.4);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 5px 0 30px rgba(0,0,0,0.5);
+    }
+
+    .brand-header {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        position: relative;
+        z-index: 1100;
+    }
+
+    .custom-toggler:focus, .custom-toggler:active {
+        outline: none !important;
+        box-shadow: none !important;
+        background-color: transparent !important;
+    }
+
+    /* Custom Nav Links */
+    .custom-nav-link {
+        color: rgba(255, 255, 255, 0.5) !important;
+        background-color: transparent !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        border-left: 4px solid transparent;
+    }
+
+        .custom-nav-link:focus,
+        .custom-nav-link:active {
+            outline: none !important;
+            box-shadow: none !important;
+            background-color: transparent !important;
+        }
+
+        .custom-nav-link:hover {
+            background: rgba(255, 255, 255, 0.06) !important;
+            color: #fff !important;
+            transform: translateX(6px);
+        }
+
+        .custom-nav-link.active {
+            background: linear-gradient(90deg, rgba(255, 193, 7, 0.2) 0%, rgba(255, 193, 7, 0.0) 100%) !important;
+            color: #ffc107 !important;
+            border-left: 4px solid #ffc107 !important;
+        }
+
+            .custom-nav-link.active .nav-icon {
+                transform: scale(1.2);
+                filter: drop-shadow(0 0 8px rgba(255, 193, 7, 0.6));
+            }
+
+    /* Profile Inner Glass Panel */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+    }
+
+        .glass-panel:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 193, 7, 0.2);
+        }
+
+    /* Small Avatar */
+    .avatar-circle {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4b1b4b 0%, #1e1b4b 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #ffc107;
+        font-size: 1.2rem;
+        border: 2px solid rgba(255,255,255,0.05);
+        transition: all 0.3s ease;
+    }
+
+    .user-profile-section:hover .avatar-circle {
+        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+        color: #000;
+        border-color: #ffc107;
+        transform: scale(1.05);
+    }
+
+    .btn-outline-warning {
+        border-width: 2px;
+    }
+
+        .btn-outline-warning:hover {
+            background-color: #ffc107;
+            color: #000;
+            transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(255, 193, 7, 0.4) !important;
+        }
+
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+    .tracking-wide {
+        letter-spacing: 0.5px;
+        font-size: 0.95rem;
+    }
+
+    .logo-pulse {
+        animation: slow-pulse 3s infinite;
+    }
+
+    @@keyframes slow-pulse {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.15);
+            filter: drop-shadow(0 0 5px rgba(255,193,7,0.5));
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+    .nav-scrollable {
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+        .nav-scrollable::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .nav-scrollable::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .nav-scrollable::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+
+            .nav-scrollable::-webkit-scrollbar-thumb:hover {
+                background: rgba(255,193,7,0.5);
+            }
+
+    /* 📱 MOBILE OVERRIDES */
+    @@media (max-width: 767.98px) {
+        .sidebar-wrapper {
+            background: rgba(10, 10, 10, 0.85);
+        }
+        /* Explicitly hide the menu when it is collapsed! */
+        .nav-scrollable.collapse {
+            display: none !important;
+        }
+        /* Style the menu when it is OPEN */
+        .nav-scrollable:not(.collapse) {
+            position: fixed;
+            top: 78px;
+            left: 0;
+            width: 100vw;
+            height: calc(100vh - 78px);
+            background: rgba(10, 10, 10, 0.98);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            z-index: 1050;
+            padding-bottom: 2rem;
+            display: flex !important; /* Ensure it shows when open */
+        }
+    }
+</style>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private void Logout()
+    {
+        UserState.Logout();
+        NavManager.NavigateTo("/login");
+    }
+}
