@@ -23,7 +23,7 @@ namespace FriendsMusicTracker.Mobile
             builder.Logging.AddDebug();
 #endif
             // TYPE IPV4_ADDRESS HERE
-            string myIpAddress = "YOUR_IPV4_HERE";
+            string myIpAddress = "IP_V4_HERE";
 
             string apiUrl = OperatingSystem.IsAndroid()
                 ? $"http://{myIpAddress}:5255/"

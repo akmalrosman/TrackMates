@@ -23,11 +23,12 @@ namespace FriendsMusicTracker.Services
 
         public ChatService()
         {
-            string myIpAddress = "YOUR_IPV4_HERE";
+            // TYPE IPV4_ADDRESS HERE
+            string myIpAddress = "IP_V4_HERE";
 
             string serverUrl = OperatingSystem.IsAndroid()
                 ? $"http://{myIpAddress}:5255/chathub"
-                : "https://localhost:5255/chathub";
+                : "http://localhost:5255/chathub";
 
             _hubConnection = new HubConnectionBuilder()
                 .WithUrl(serverUrl)
