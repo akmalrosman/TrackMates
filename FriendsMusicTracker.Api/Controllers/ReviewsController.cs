@@ -16,7 +16,7 @@ namespace FriendsMusicTracker.Api.Controllers
             _context = context;
         }
 
-        // ⭐ GET: api/reviews
+        // GET: api/reviews
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Review>>> GetReviews()
         {
@@ -24,7 +24,7 @@ namespace FriendsMusicTracker.Api.Controllers
             return await _context.Reviews.ToListAsync();
         }
 
-        // ➕ POST: api/reviews
+        // POST: api/reviews
         [HttpPost]
         public async Task<ActionResult<Review>> PostReview(Review review)
         {
@@ -34,7 +34,7 @@ namespace FriendsMusicTracker.Api.Controllers
             return CreatedAtAction(nameof(GetReviews), new { id = review.Id }, review);
         }
 
-        // ✏️ PUT: api/reviews/5
+        // PUT: api/reviews/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutReview(int id, Review review)
         {
@@ -64,7 +64,7 @@ namespace FriendsMusicTracker.Api.Controllers
             return NoContent();
         }
 
-        // ❌ DELETE: api/reviews/5
+        // DELETE: api/reviews/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteReview(int id)
         {

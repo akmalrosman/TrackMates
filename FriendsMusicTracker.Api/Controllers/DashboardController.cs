@@ -15,7 +15,6 @@ namespace FriendsMusicTracker.Api.Controllers
             _context = context;
         }
 
-        // Change this line in DashboardController.cs
         [HttpGet("stats")]
         public async Task<IActionResult> GetDashboardStats([FromQuery] string? username = null)
         {

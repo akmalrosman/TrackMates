@@ -16,7 +16,7 @@ namespace FriendsMusicTracker.Api.Controllers
             _context = context;
         }
 
-        // 🎵 GET: api/playlists (Loads the playlists)
+        // GET: api/playlists (Loads the playlists)
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Playlist>>> GetPlaylists([FromQuery] string? curator)
         {
@@ -29,7 +29,7 @@ namespace FriendsMusicTracker.Api.Controllers
             return await _context.Playlists.ToListAsync();
         }
 
-        // ➕ POST: api/playlists (Adds a new playlist)
+        // POST: api/playlists (Adds a new playlist)
         [HttpPost]
         public async Task<ActionResult<Playlist>> PostPlaylist(Playlist playlist)
         {
@@ -39,7 +39,7 @@ namespace FriendsMusicTracker.Api.Controllers
             return CreatedAtAction(nameof(GetPlaylists), new { id = playlist.Id }, playlist);
         }
 
-        // ✏️ PUT: api/playlists/5 (Updates a playlist)
+        // PUT: api/playlists/5 (Updates a playlist)
         [HttpPut("{id}")]
         public async Task<IActionResult> PutPlaylist(int id, Playlist playlist)
         {
@@ -69,7 +69,7 @@ namespace FriendsMusicTracker.Api.Controllers
             return NoContent();
         }
 
-        // ❌ DELETE: api/playlists/5 (Deletes a playlist)
+        // DELETE: api/playlists/5 (Deletes a playlist)
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePlaylist(int id)
         {
@@ -85,7 +85,7 @@ namespace FriendsMusicTracker.Api.Controllers
             return NoContent();
         }
 
-        // 🎧 GET: api/playlists/5/songs (NEW: Gets all songs inside a specific playlist for the Lounge Room!)
+        // GET: api/playlists/5/songs (Gets all songs inside a specific playlist for the Lounge Room)
         [HttpGet("{id}/songs")]
         public async Task<ActionResult<IEnumerable<Song>>> GetPlaylistSongs(int id)
         {

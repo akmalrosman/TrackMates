@@ -30,7 +30,7 @@
 
     <div class="row g-4">
 
-        @* LEFT COLUMN: Review Form & Community Feed *@
+        @* Review Form & Community Feed *@
         <div class="col-12 col-lg-7 d-flex flex-column gap-4">
 
             @* Add/Edit Review Form *@
@@ -140,7 +140,7 @@
             </div>
         </div>
 
-        @* RIGHT COLUMN: Tracklist Preview & Player *@
+        @* Tracklist Preview & Player *@
         <div class="col-12 col-lg-5 d-flex flex-column gap-4">
 
             @* Tracklist Preview Panel *@
@@ -220,7 +220,6 @@
 </div>
 
 <style>
-    /* ✨ Glassmorphic Panels */
     .glass-panel {
         background: rgba(20, 20, 20, 0.4);
         backdrop-filter: blur(16px);
@@ -229,7 +228,6 @@
         border-radius: 16px;
     }
 
-    /* 🔴 Glassmorphic Error Banner */
     .glass-error-banner {
         background: rgba(217, 33, 33, 0.15);
         backdrop-filter: blur(10px);
@@ -241,7 +239,6 @@
         color: #ffcccc;
     }
 
-    /* ⌨️ Custom Inputs */
     .custom-input {
         background: rgba(0, 0, 0, 0.4) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -266,7 +263,6 @@
         letter-spacing: 0.8px;
     }
 
-    /* 💬 Review Rows & Track Rows */
     .track-row {
         background: rgba(0, 0, 0, 0.2);
         border: 1px solid rgba(255, 255, 255, 0.02);
@@ -283,7 +279,6 @@
         background: rgba(255, 193, 7, 0.03);
     }
 
-    /* Reviewer Avatar */
     .reviewer-avatar {
         width: 36px;
         height: 36px;
@@ -298,7 +293,6 @@
         border: 2px solid rgba(255,255,255,0.05);
     }
 
-    /* 🎛️ Action Buttons */
     .hover-white:hover {
         color: #fff !important;
         transform: scale(1.1);
@@ -327,7 +321,6 @@
             box-shadow: 0 5px 15px rgba(255, 193, 7, 0.4) !important;
         }
 
-    /* 🎬 Player Animation & Utilities */
     .player-card {
         box-shadow: 0 10px 30px rgba(255, 193, 7, 0.15) !important;
     }
@@ -371,7 +364,6 @@
         }
     }
 
-    /* Custom Scrollbar */
     .custom-scroll::-webkit-scrollbar {
         width: 6px;
     }
@@ -402,7 +394,6 @@
     private string activeEmbedId = string.Empty;
     private string? errorMessage;
 
-    // Relative URLs
     private readonly string ApiUrlReviews = "api/reviews";
     private readonly string ApiUrlMembers = "api/members";
     private readonly string ApiUrlPlaylists = "api/playlists";

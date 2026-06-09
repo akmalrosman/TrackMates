@@ -16,7 +16,7 @@ namespace FriendsMusicTracker.Api.Controllers
             _context = context;
         }
 
-        // 🔍 GET: api/playlistsongs/playlist/5 (Gets all songs inside a specific playlist)
+        // GET: api/playlistsongs/playlist/5 (Gets all songs inside a specific playlist)
         [HttpGet("playlist/{playlistId}")]
         public async Task<ActionResult<IEnumerable<PlaylistSong>>> GetSongsForPlaylist(int playlistId)
         {
@@ -25,7 +25,7 @@ namespace FriendsMusicTracker.Api.Controllers
                 .ToListAsync();
         }
 
-        // ➕ POST: api/playlistsongs (Links a song to a playlist)
+        // POST: api/playlistsongs (Links a song to a playlist)
         [HttpPost]
         public async Task<ActionResult<PlaylistSong>> PostPlaylistSong(PlaylistSong playlistSong)
         {
@@ -35,7 +35,7 @@ namespace FriendsMusicTracker.Api.Controllers
             return CreatedAtAction(nameof(GetSongsForPlaylist), new { playlistId = playlistSong.PlaylistId }, playlistSong);
         }
 
-        // ❌ DELETE: api/playlistsongs/5 (Unlinks a song from a playlist)
+        // DELETE: api/playlistsongs/5 (Unlinks a song from a playlist)
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePlaylistSong(int id)
         {

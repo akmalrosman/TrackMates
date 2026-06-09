@@ -95,7 +95,7 @@
             </div>
         </div>
 
-        @* RIGHT COLUMN: Playlist Details & Tracks *@
+        @* Playlist Details & Tracks *@
         <div class="col-12 col-lg-7">
             @if (selectedPlaylist == null)
             {
@@ -183,7 +183,6 @@
 </div>
 
 <style>
-    /* ✨ Glassmorphic Panels */
     .glass-panel {
         background: rgba(20, 20, 20, 0.4);
         backdrop-filter: blur(16px);
@@ -192,7 +191,6 @@
         border-radius: 16px;
     }
 
-    /* 🔴 Glassmorphic Error Banner */
     .glass-error-banner {
         background: rgba(217, 33, 33, 0.15);
         backdrop-filter: blur(10px);
@@ -204,7 +202,6 @@
         color: #ffcccc;
     }
 
-    /* ⌨️ Custom Inputs (Includes styling for the Select Dropdown) */
     .custom-input {
         background: rgba(0, 0, 0, 0.4) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -229,7 +226,6 @@
         letter-spacing: 0.8px;
     }
 
-    /* 🎶 Track List Rows */
     .track-row {
         background: rgba(0, 0, 0, 0.2);
         border: 1px solid rgba(255, 255, 255, 0.02);
@@ -247,7 +243,6 @@
         border: 1px solid rgba(255, 193, 7, 0.4) !important;
     }
 
-    /* 🎛️ Action Buttons */
     .hover-white:hover {
         color: #fff !important;
         transform: scale(1.1);
@@ -267,7 +262,6 @@
             box-shadow: 0 5px 15px rgba(255, 193, 7, 0.4) !important;
         }
 
-    /* Utilities & Animations */
     .pulse-dot {
         width: 10px;
         height: 10px;
@@ -319,7 +313,6 @@
     private bool isEditing = false;
     private string? errorMessage;
 
-    // Shifted endpoints to relative paths to avoid localhost routing loopbacks
     private readonly string ApiUrlPlaylists = "api/playlists";
     private readonly string ApiUrlSongs = "api/songs";
     private readonly string ApiUrlPlaylistSongs = "api/playlistsongs";
@@ -334,10 +327,8 @@
         try
         {
             errorMessage = null;
-            // Fetch Playlists
             playlists = await Http.GetFromJsonAsync<List<Playlist>>($"{ApiUrlPlaylists}?curator={UserState.MemberName}") ?? new();
 
-            // Fetch User's Songs (for the dropdown)
             globalSongs = await Http.GetFromJsonAsync<List<Song>>($"{ApiUrlSongs}?addedBy={UserState.MemberName}") ?? new();
         }
         catch (Exception ex)
@@ -352,7 +343,6 @@
         try
         {
             errorMessage = null;
-            // Fetch the mappings for the selected playlist
             currentPlaylistSongs = await Http.GetFromJsonAsync<List<PlaylistSong>>($"{ApiUrlPlaylistSongs}/playlist/{playlistId}") ?? new();
         }
         catch (Exception ex)
@@ -461,7 +451,6 @@
         try
         {
             errorMessage = null;
-            // Add song to playlist map
             await Http.PostAsJsonAsync(ApiUrlPlaylistSongs, map);
 
             selectedSongIdToAdd = 0;
@@ -479,7 +468,6 @@
         try
         {
             errorMessage = null;
-            // Remove song from playlist map
             await Http.DeleteAsync($"{ApiUrlPlaylistSongs}/{playlistSongId}");
 
             if (selectedPlaylist != null)

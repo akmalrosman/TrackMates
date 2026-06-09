@@ -16,7 +16,7 @@ namespace FriendsMusicTracker.Api.Controllers
             _context = context;
         }
 
-        // 👥 GET: api/members (Loads the table)
+        // GET: api/members
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Member>>> GetMembers()
         {
@@ -24,7 +24,7 @@ namespace FriendsMusicTracker.Api.Controllers
             return Ok(members);
         }
 
-        // ➕ POST: api/members (Adds a new member)
+        // POST: api/members
         [HttpPost]
         public async Task<ActionResult<Member>> PostMember(Member member)
         {
@@ -35,7 +35,7 @@ namespace FriendsMusicTracker.Api.Controllers
             return CreatedAtAction(nameof(GetMembers), new { id = member.Id }, member);
         }
 
-        // ✏️ PUT: api/members/5 (Updates an existing member)
+        // PUT: api/members/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutMember(int id, Member member)
         {
@@ -65,7 +65,7 @@ namespace FriendsMusicTracker.Api.Controllers
             return NoContent();
         }
 
-        // ❌ DELETE: api/members/5 (Deletes a member)
+        // DELETE: api/members/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMember(int id)
         {

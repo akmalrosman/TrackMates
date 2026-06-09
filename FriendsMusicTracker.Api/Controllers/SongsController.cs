@@ -16,7 +16,7 @@ namespace FriendsMusicTracker.Api.Controllers
             _context = context;
         }
 
-        // 🎧 GET: api/songs?addedBy=John
+        // GET: api/songs?addedBy=John
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Song>>> GetSongs([FromQuery] string? addedBy)
         {
@@ -31,7 +31,6 @@ namespace FriendsMusicTracker.Api.Controllers
                 return Ok(userSongs);
             }
 
-            // Otherwise, fetch ALL songs in the database (Needed for the Reviews page!)
             var allSongs = await _context.Songs
                 .AsNoTracking()
                 .ToListAsync();
@@ -39,7 +38,7 @@ namespace FriendsMusicTracker.Api.Controllers
             return Ok(allSongs);
         }
 
-        // ➕ POST: api/songs
+        // POST: api/songs
         [HttpPost]
         public async Task<ActionResult<Song>> PostSong([FromBody] Song song)
         {
@@ -51,7 +50,7 @@ namespace FriendsMusicTracker.Api.Controllers
             return CreatedAtAction(nameof(GetSongs), new { addedBy = song.AddedBy }, song);
         }
 
-        // ✏️ PUT: api/songs/5
+        // PUT: api/songs/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutSong(int id, [FromBody] Song song)
         {
@@ -72,7 +71,7 @@ namespace FriendsMusicTracker.Api.Controllers
             return NoContent();
         }
 
-        // ❌ DELETE: api/songs/5
+        // DELETE: api/songs/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSong(int id)
         {

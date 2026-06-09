@@ -93,7 +93,6 @@
     private bool isEditing = false;
     private string? errorMessage;
 
-    // Removed localhost to force it to use the global Wi-Fi IP address
     private readonly string ApiUrl = "api/members";
 
     protected override async Task OnInitializedAsync()
@@ -147,7 +146,6 @@
 
     private void EditMember(Member member)
     {
-        // Clone the object so changes don't live-update the table row until saved
         currentMember = new Member { Id = member.Id, Name = member.Name, FavoriteGenre = member.FavoriteGenre };
         isEditing = true;
     }

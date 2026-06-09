@@ -23,10 +23,11 @@ namespace FriendsMusicTracker.Services
 
         public ChatService()
         {
-            // Both platforms now point to the correct HTTP port 5255!
+            string myIpAddress = "YOUR_IPV4_HERE";
+
             string serverUrl = OperatingSystem.IsAndroid()
-                ? "http://192.168.1.40:5255/chathub"
-                : "http://localhost:5255/chathub";
+                ? $"http://{myIpAddress}:5255/chathub"
+                : "https://localhost:5255/chathub";
 
             _hubConnection = new HubConnectionBuilder()
                 .WithUrl(serverUrl)
@@ -44,11 +45,9 @@ namespace FriendsMusicTracker.Services
 
                 if (_messages.Count > 50) _messages.RemoveAt(0);
 
-                // This triggers the UI component to redraw itself
                 OnMessageAdded?.Invoke();
             });
 
-            // Start the connection in the background cleanly
             Task.Run(async () =>
             {
                 try
@@ -62,14 +61,12 @@ namespace FriendsMusicTracker.Services
             });
         }
 
-        // Turned into an async Task so it waits for the transmission to finish
         public async Task SendMessage(string user, string text)
         {
             if (string.IsNullOrWhiteSpace(text) || _hubConnection is null) return;
 
             try
             {
-                // Make sure we are connected before sending
                 if (_hubConnection.State == HubConnectionState.Disconnected)
                 {
                     await _hubConnection.StartAsync();

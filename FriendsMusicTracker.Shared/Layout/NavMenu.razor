@@ -73,7 +73,6 @@
 </div>
 
 <style>
-    /* 🌟 Fully Glassmorphic Sidebar */
     .sidebar-wrapper {
         background: rgba(10, 10, 10, 0.4);
         backdrop-filter: blur(24px);
@@ -94,7 +93,6 @@
         background-color: transparent !important;
     }
 
-    /* Custom Nav Links */
     .custom-nav-link {
         color: rgba(255, 255, 255, 0.5) !important;
         background-color: transparent !important;
@@ -127,7 +125,6 @@
                 filter: drop-shadow(0 0 8px rgba(255, 193, 7, 0.6));
             }
 
-    /* Profile Inner Glass Panel */
     .glass-panel {
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid rgba(255, 255, 255, 0.05);
@@ -139,7 +136,6 @@
             border-color: rgba(255, 193, 7, 0.2);
         }
 
-    /* Small Avatar */
     .avatar-circle {
         width: 45px;
         height: 45px;
@@ -223,16 +219,13 @@
                 background: rgba(255,193,7,0.5);
             }
 
-    /* 📱 MOBILE OVERRIDES */
     @@media (max-width: 767.98px) {
         .sidebar-wrapper {
             background: rgba(10, 10, 10, 0.85);
         }
-        /* Explicitly hide the menu when it is collapsed! */
         .nav-scrollable.collapse {
             display: none !important;
         }
-        /* Style the menu when it is OPEN */
         .nav-scrollable:not(.collapse) {
             position: fixed;
             top: 78px;
@@ -244,7 +237,7 @@
             -webkit-backdrop-filter: blur(24px);
             z-index: 1050;
             padding-bottom: 2rem;
-            display: flex !important; /* Ensure it shows when open */
+            display: flex !important;
         }
     }
 </style>
