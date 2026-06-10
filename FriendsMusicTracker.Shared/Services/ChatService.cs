@@ -24,7 +24,7 @@ namespace FriendsMusicTracker.Services
         public ChatService()
         {
             // TYPE IPV4_ADDRESS HERE
-            string myIpAddress = "IP_V4_HERE";
+            string myIpAddress = "HERE_IPV4_ADDRESS";
 
             string serverUrl = OperatingSystem.IsAndroid()
                 ? $"http://{myIpAddress}:5255/chathub"
